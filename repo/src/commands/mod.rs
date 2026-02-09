@@ -38,7 +38,7 @@ pub fn dispatch(cli: Cli) -> Result<std::process::ExitCode> {
                 screenshots_dest: home.join("Documents/screenshots"),
             };
             let report = tidy::run(&options)?;
-            print_tidy(&report, OutputStyle::new(plain, verbose));
+            print_tidy(&report, OutputStyle::new(plain, verbose), apply, all);
             Ok(std::process::ExitCode::from(0))
         }
     }
@@ -154,7 +154,7 @@ fn print_init(report: &init::InitReport, style: OutputStyle) {
     }
 }
 
-fn print_tidy(report: &tidy::TidyReport, style: OutputStyle) {
+fn print_tidy(report: &tidy::TidyReport, style: OutputStyle, apply: bool, delete_all: bool) {
     println!("{}", style.header("life-os tidy"));
 
     let desktop_clean = report.desktop_screenshots.len() <= 10 && report.desktop_other.len() <= 2;
@@ -201,6 +201,28 @@ fn print_tidy(report: &tidy::TidyReport, style: OutputStyle) {
             style.highlight(&report.downloads_old_items.len().to_string()),
             style.dim(&tidy::human_bytes(report.downloads_old_bytes))
         );
+        if apply {
+            println!();
+            println!("{}", style.section("Actions"));
+            println!(
+                "{} Moved screenshots: {}",
+                bullet(style),
+                style.highlight(&report.planned_moves.len().to_string())
+            );
+            if delete_all {
+                println!(
+                    "{} Deleted downloads (all): {}",
+                    bullet(style),
+                    style.highlight(&report.planned_downloads_deletions.len().to_string())
+                );
+            } else {
+                println!(
+                    "{} Deleted downloads (>7 days): {}",
+                    bullet(style),
+                    style.highlight(&report.planned_downloads_deletions.len().to_string())
+                );
+            }
+        }
         return;
     }
 
@@ -260,6 +282,29 @@ fn print_tidy(report: &tidy::TidyReport, style: OutputStyle) {
         style.highlight(&report.downloads_old_items.len().to_string()),
         style.dim(&tidy::human_bytes(report.downloads_old_bytes))
     );
+
+    if apply {
+        println!();
+        println!("{}", style.section("Actions"));
+        println!(
+            "{} Moved screenshots: {}",
+            bullet(style),
+            style.highlight(&report.planned_moves.len().to_string())
+        );
+        if delete_all {
+            println!(
+                "{} Deleted downloads (all): {}",
+                bullet(style),
+                style.highlight(&report.planned_downloads_deletions.len().to_string())
+            );
+        } else {
+            println!(
+                "{} Deleted downloads (>7 days): {}",
+                bullet(style),
+                style.highlight(&report.planned_downloads_deletions.len().to_string())
+            );
+        }
+    }
 }
 
 fn total_size(paths: &[std::path::PathBuf]) -> u64 {

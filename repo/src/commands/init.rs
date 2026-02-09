@@ -63,3 +63,55 @@ fn ensure_dir(path: &Path, verbose: bool, created: &mut Vec<PathBuf>) -> Result<
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{ensure_dir, ensure_tree};
+    use crate::spec::Node;
+    use std::fs;
+    use tempfile::tempdir;
+
+    #[test]
+    fn ensure_tree_creates_nested_directories() {
+        let dir = tempdir().expect("tempdir");
+        let base = dir.path();
+
+        let nodes = vec![Node {
+            path: "a".to_string(),
+            children: vec![
+                Node {
+                    path: "b".to_string(),
+                    children: vec![],
+                },
+                Node {
+                    path: "c".to_string(),
+                    children: vec![Node {
+                        path: "d".to_string(),
+                        children: vec![],
+                    }],
+                },
+            ],
+        }];
+
+        let mut created = Vec::new();
+        ensure_tree(base, &nodes, false, &mut created).expect("ensure_tree");
+
+        assert!(base.join("a").is_dir());
+        assert!(base.join("a/b").is_dir());
+        assert!(base.join("a/c").is_dir());
+        assert!(base.join("a/c/d").is_dir());
+    }
+
+    #[test]
+    fn ensure_dir_is_idempotent() {
+        let dir = tempdir().expect("tempdir");
+        let path = dir.path().join("exists");
+        fs::create_dir_all(&path).expect("create dir");
+
+        let mut created = Vec::new();
+        ensure_dir(&path, false, &mut created).expect("ensure_dir");
+
+        assert!(path.is_dir());
+        assert!(created.is_empty());
+    }
+}

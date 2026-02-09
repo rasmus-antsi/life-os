@@ -36,3 +36,98 @@ pub fn run(verbose: bool) -> Result<std::process::ExitCode> {
         Ok(std::process::ExitCode::from(1))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::run;
+    use std::fs;
+    use std::path::Path;
+    use std::sync::{Mutex, OnceLock};
+    use tempfile::tempdir;
+
+    static ENV_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+
+    fn write_spec(home: &Path, content: &str) {
+        let spec_path = home.join("System/life-os/config/spec.json");
+        let parent = spec_path.parent().expect("spec parent");
+        fs::create_dir_all(parent).expect("create spec dir");
+        fs::write(spec_path, content).expect("write spec");
+    }
+
+    fn with_temp_home<F: FnOnce(&Path)>(f: F) {
+        let _guard = ENV_LOCK.get_or_init(|| Mutex::new(())).lock().unwrap();
+        let original_home = std::env::var("HOME").ok();
+
+        let dir = tempdir().expect("tempdir");
+        unsafe {
+            std::env::set_var("HOME", dir.path());
+        }
+
+        f(dir.path());
+
+        if let Some(value) = original_home {
+            unsafe {
+                std::env::set_var("HOME", value);
+            }
+        } else {
+            unsafe {
+                std::env::remove_var("HOME");
+            }
+        }
+    }
+
+    #[test]
+    fn doctor_returns_ok_when_spec_is_satisfied() {
+        with_temp_home(|home| {
+            write_spec(
+                home,
+                r#"{
+  "version": 1,
+  "areas": [
+    {
+      "name": "System",
+      "root": "~/System",
+      "required": [
+        { "path": "Projects", "children": [] },
+        { "path": "Notes", "children": [ { "path": "Inbox", "children": [] } ] }
+      ]
+    }
+  ]
+}"#,
+            );
+
+            fs::create_dir_all(home.join("System/Projects")).expect("create Projects");
+            fs::create_dir_all(home.join("System/Notes/Inbox")).expect("create Inbox");
+
+            let code = run(false).expect("doctor run");
+            assert_eq!(code, std::process::ExitCode::from(0));
+        });
+    }
+
+    #[test]
+    fn doctor_returns_failure_when_missing_folders() {
+        with_temp_home(|home| {
+            write_spec(
+                home,
+                r#"{
+  "version": 1,
+  "areas": [
+    {
+      "name": "System",
+      "root": "~/System",
+      "required": [
+        { "path": "Projects", "children": [] },
+        { "path": "Notes", "children": [ { "path": "Inbox", "children": [] } ] }
+      ]
+    }
+  ]
+}"#,
+            );
+
+            fs::create_dir_all(home.join("System/Projects")).expect("create Projects");
+
+            let code = run(false).expect("doctor run");
+            assert_eq!(code, std::process::ExitCode::from(1));
+        });
+    }
+}

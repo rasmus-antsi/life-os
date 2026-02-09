@@ -26,3 +26,23 @@ pub fn expand_root(root: &str, home: &Path) -> PathBuf {
         PathBuf::from(root)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::expand_root;
+    use std::path::Path;
+
+    #[test]
+    fn expand_root_expands_tilde_prefix() {
+        let home = Path::new("/Users/tester");
+        let out = expand_root("~/System/life-os", home);
+        assert_eq!(out, Path::new("/Users/tester/System/life-os"));
+    }
+
+    #[test]
+    fn expand_root_leaves_non_tilde_path_unchanged() {
+        let home = Path::new("/Users/tester");
+        let out = expand_root("/var/data", home);
+        assert_eq!(out, Path::new("/var/data"));
+    }
+}

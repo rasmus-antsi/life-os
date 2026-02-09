@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "areas": [
+    {
+      "name": "System",
+      "root": "~/System",
+      "required": [
+        { "path": "apps" },
+        { "path": "backups" },
+        { "path": "bootstrap" },
+        { "path": "configs" },
+        { "path": "dotfiles" },
+        {
+          "path": "life-os",
+          "children": [
+            { "path": "repo" },
+            { "path": "bin" },
+            { "path": "config" },
+            { "path": "state" },
+            { "path": "logs" },
+            { "path": "quarantine" }
+          ]
+        },
+        { "path": "logs" },
+        { "path": "scripts" },
+        { "path": "secrets" },
+        { "path": "temp" }
+      ]
+    },
+    {
+      "name": "Documents",
+      "root": "~/Documents",
+      "required": [
+        { "path": "Image-Line" },
+        { "path": "archive" },
+        { "path": "audio" },
+        { "path": "files" },
+        { "path": "finance" },
+        { "path": "images" },
+        { "path": "legal" },
+        { "path": "personal" },
+        { "path": "school" },
+        { "path": "videos" },
+        { "path": "work" },
+        { "path": "writing" }
+      ],
+      "notes": [
+        "Top-level files currently present in ~/Documents (not enforced as folders):",
+        "- djgzfcy-3ba9284d-233b-41a1-b646-2c9fd88d6c78.jpg",
+        "- wallpaper.png"
+      ]
+    },
+    {
+      "name": "Workspace",
+      "root": "~/Workspace",
+      "required": [
+        { "path": "archive" },
+        { "path": "assets" },
+        { "path": "clients" },
+        { "path": "code" },
+        { "path": "hardware" },
+        { "path": "learning" },
+        { "path": "saas" },
+        { "path": "sandbox" },
+        { "path": "school" }
+      ]
+    }
+  ]
+}
+

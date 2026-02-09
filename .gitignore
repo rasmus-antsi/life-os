@@ -1,0 +1,19 @@
+# Rust
+repo/target/
+
+# macOS
+.DS_Store
+
+# Runtime outputs (do not commit)
+bin/
+state/
+logs/
+quarantine/
+
+# Secrets (never commit)
+**/secrets/
+**/*.key
+**/*.pem
+**/*.p12
+.env
+

@@ -2,20 +2,27 @@ use anyhow::{Context, Result};
 use std::path::PathBuf;
 
 use crate::check::check_tree;
+use crate::spec::Node;
 use crate::spec_loader::{expand_root, load_spec};
 
-pub fn run(verbose: bool) -> Result<std::process::ExitCode> {
+#[derive(Debug)]
+pub struct DoctorReport {
+    pub missing: Vec<PathBuf>,
+    pub areas: usize,
+    pub required: usize,
+    pub roots: Vec<PathBuf>,
+}
+
+pub fn run(_verbose: bool) -> Result<DoctorReport> {
     let home = dirs::home_dir().context("could not determine home directory")?;
     let spec = load_spec()?;
 
     let mut missing: Vec<PathBuf> = Vec::new();
+    let mut roots: Vec<PathBuf> = Vec::new();
 
     for area in &spec.areas {
         let root = expand_root(&area.root, &home);
-
-        if verbose {
-            println!("Checking {} at {}", area.name, root.display());
-        }
+        roots.push(root.clone());
 
         if !root.exists() {
             missing.push(root.clone());
@@ -25,16 +32,29 @@ pub fn run(verbose: bool) -> Result<std::process::ExitCode> {
         check_tree(&root, &area.required, &mut missing);
     }
 
-    if missing.is_empty() {
-        println!("✓ life-os doctor: OK (spec satisfied)");
-        Ok(std::process::ExitCode::from(0))
-    } else {
-        println!("✗ life-os doctor: missing folders");
-        for p in &missing {
-            println!("  - {}", p.display());
+    let required = spec
+        .areas
+        .iter()
+        .map(|area| count_nodes(&area.required))
+        .sum();
+
+    Ok(DoctorReport {
+        missing,
+        areas: spec.areas.len(),
+        required,
+        roots,
+    })
+}
+
+fn count_nodes(nodes: &[Node]) -> usize {
+    let mut total = 0;
+    for node in nodes {
+        total += 1;
+        if !node.children.is_empty() {
+            total += count_nodes(&node.children);
         }
-        Ok(std::process::ExitCode::from(1))
     }
+    total
 }
 
 #[cfg(test)]
@@ -215,8 +235,8 @@ mod tests {
                 fs::create_dir_all(home.join(path)).expect("create dir");
             }
 
-            let code = run(false).expect("doctor run");
-            assert_eq!(code, std::process::ExitCode::from(0));
+            let report = run(false).expect("doctor run");
+            assert!(report.missing.is_empty());
         });
     }
 
@@ -242,8 +262,8 @@ mod tests {
 
             fs::create_dir_all(home.join("Documents/archive")).expect("create archive");
 
-            let code = run(false).expect("doctor run");
-            assert_eq!(code, std::process::ExitCode::from(1));
+            let report = run(false).expect("doctor run");
+            assert_eq!(report.missing.len(), 1);
         });
     }
 }

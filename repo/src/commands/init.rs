@@ -5,7 +5,12 @@ use std::path::{Path, PathBuf};
 use crate::spec::Node;
 use crate::spec_loader::{expand_root, load_spec};
 
-pub fn run(verbose: bool) -> Result<std::process::ExitCode> {
+#[derive(Debug)]
+pub struct InitReport {
+    pub created: Vec<PathBuf>,
+}
+
+pub fn run(verbose: bool) -> Result<InitReport> {
     let home = dirs::home_dir().context("could not determine home directory")?;
     let spec = load_spec()?;
 
@@ -22,16 +27,7 @@ pub fn run(verbose: bool) -> Result<std::process::ExitCode> {
         ensure_tree(&root, &area.required, verbose, &mut created)?;
     }
 
-    if created.is_empty() {
-        println!("✓ life-os init: nothing to create (spec already satisfied)");
-    } else {
-        println!("✓ life-os init: created {} folder(s)", created.len());
-        if !verbose {
-            println!("Run with --verbose to see each created path.");
-        }
-    }
-
-    Ok(std::process::ExitCode::from(0))
+    Ok(InitReport { created })
 }
 
 fn ensure_tree(

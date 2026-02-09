@@ -18,12 +18,18 @@ pub enum Command {
         /// Print the resolved paths being checked
         #[arg(long)]
         verbose: bool,
+        /// Disable colors and symbols
+        #[arg(long)]
+        plain: bool,
     },
 
     Init {
         /// Print each folder created
         #[arg(long)]
         verbose: bool,
+        /// Disable colors and symbols
+        #[arg(long)]
+        plain: bool,
     },
 
     /// Tidy Desktop screenshots and Downloads inbox
@@ -34,6 +40,12 @@ pub enum Command {
         /// Delete all downloads (non-hidden), regardless of age
         #[arg(long)]
         all: bool,
+        /// Show full details regardless of status
+        #[arg(long)]
+        verbose: bool,
+        /// Disable colors and symbols
+        #[arg(long)]
+        plain: bool,
     },
 }
 

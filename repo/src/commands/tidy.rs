@@ -18,6 +18,8 @@ pub struct TidyReport {
     pub desktop_other: Vec<PathBuf>,
     pub downloads_items: Vec<PathBuf>,
     pub downloads_total_bytes: u64,
+    pub downloads_old_items: Vec<PathBuf>,
+    pub downloads_old_bytes: u64,
     pub planned_downloads_deletions: Vec<PathBuf>,
     pub planned_moves: Vec<(PathBuf, PathBuf)>,
 }
@@ -51,15 +53,9 @@ pub fn run(options: &TidyOptions) -> Result<TidyReport> {
         }
     }
 
-    let cutoff = if options.delete_all_downloads {
-        None
-    } else {
-        Some(
-            SystemTime::now()
-                .checked_sub(Duration::from_secs(7 * 24 * 60 * 60))
-                .context("failed to compute cutoff time")?,
-        )
-    };
+    let cutoff = SystemTime::now()
+        .checked_sub(Duration::from_secs(7 * 24 * 60 * 60))
+        .context("failed to compute cutoff time")?;
 
     for path in downloads_entries {
         let file_name = match path.file_name().and_then(|s| s.to_str()) {
@@ -74,7 +70,12 @@ pub fn run(options: &TidyOptions) -> Result<TidyReport> {
         report.downloads_total_bytes = report.downloads_total_bytes.saturating_add(size);
         report.downloads_items.push(path.clone());
 
-        if options.delete_all_downloads || cutoff.is_some_and(|c| is_older_than(&path, c)) {
+        if is_older_than(&path, cutoff) {
+            report.downloads_old_items.push(path.clone());
+            report.downloads_old_bytes = report.downloads_old_bytes.saturating_add(size);
+        }
+
+        if options.delete_all_downloads || is_older_than(&path, cutoff) {
             report.planned_downloads_deletions.push(path);
         }
     }

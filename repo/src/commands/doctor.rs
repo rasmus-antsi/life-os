@@ -88,16 +88,132 @@ mod tests {
       "name": "System",
       "root": "~/System",
       "required": [
-        { "path": "Projects", "children": [] },
-        { "path": "Notes", "children": [ { "path": "Inbox", "children": [] } ] }
+        { "path": "apps" },
+        { "path": "backups" },
+        { "path": "bootstrap" },
+        { "path": "configs" },
+        { "path": "dotfiles" },
+        {
+          "path": "life-os",
+          "children": [
+            { "path": "repo" },
+            { "path": "bin" },
+            { "path": "config" },
+            { "path": "state" },
+            { "path": "logs" },
+            { "path": "quarantine" }
+          ]
+        },
+        { "path": "logs" },
+        { "path": "scripts" },
+        { "path": "secrets" },
+        { "path": "temp" }
+      ]
+    },
+    {
+      "name": "Documents",
+      "root": "~/Documents",
+      "required": [
+        { "path": "Image-Line" },
+        { "path": "archive" },
+        { "path": "audio" },
+        { "path": "files" },
+        { "path": "finance" },
+        { "path": "images" },
+        { "path": "legal" },
+        { "path": "personal" },
+        {
+          "path": "school",
+          "children": [
+            { "path": "admin" },
+            { "path": "assignments" },
+            { "path": "archive" },
+            { "path": "classes" },
+            { "path": "files" },
+            { "path": "img" },
+            { "path": "notes" },
+            { "path": "projects" },
+            { "path": "resources" },
+            { "path": "submissions" }
+          ]
+        },
+        { "path": "videos" },
+        { "path": "work" },
+        { "path": "writing" },
+        { "path": "screenshots" }
+      ]
+    },
+    {
+      "name": "Workspace",
+      "root": "~/Workspace",
+      "required": [
+        { "path": "archive" },
+        { "path": "assets" },
+        { "path": "clients" },
+        { "path": "code" },
+        { "path": "hardware" },
+        { "path": "learning" },
+        { "path": "saas" },
+        { "path": "sandbox" },
+        { "path": "school" }
       ]
     }
   ]
 }"#,
             );
 
-            fs::create_dir_all(home.join("System/Projects")).expect("create Projects");
-            fs::create_dir_all(home.join("System/Notes/Inbox")).expect("create Inbox");
+            let required = [
+                "System/apps",
+                "System/backups",
+                "System/bootstrap",
+                "System/configs",
+                "System/dotfiles",
+                "System/life-os/repo",
+                "System/life-os/bin",
+                "System/life-os/config",
+                "System/life-os/state",
+                "System/life-os/logs",
+                "System/life-os/quarantine",
+                "System/logs",
+                "System/scripts",
+                "System/secrets",
+                "System/temp",
+                "Documents/Image-Line",
+                "Documents/archive",
+                "Documents/audio",
+                "Documents/files",
+                "Documents/finance",
+                "Documents/images",
+                "Documents/legal",
+                "Documents/personal",
+                "Documents/school/admin",
+                "Documents/school/assignments",
+                "Documents/school/archive",
+                "Documents/school/classes",
+                "Documents/school/files",
+                "Documents/school/img",
+                "Documents/school/notes",
+                "Documents/school/projects",
+                "Documents/school/resources",
+                "Documents/school/submissions",
+                "Documents/videos",
+                "Documents/work",
+                "Documents/writing",
+                "Documents/screenshots",
+                "Workspace/archive",
+                "Workspace/assets",
+                "Workspace/clients",
+                "Workspace/code",
+                "Workspace/hardware",
+                "Workspace/learning",
+                "Workspace/saas",
+                "Workspace/sandbox",
+                "Workspace/school",
+            ];
+
+            for path in required {
+                fs::create_dir_all(home.join(path)).expect("create dir");
+            }
 
             let code = run(false).expect("doctor run");
             assert_eq!(code, std::process::ExitCode::from(0));
@@ -113,18 +229,18 @@ mod tests {
   "version": 1,
   "areas": [
     {
-      "name": "System",
-      "root": "~/System",
+      "name": "Documents",
+      "root": "~/Documents",
       "required": [
-        { "path": "Projects", "children": [] },
-        { "path": "Notes", "children": [ { "path": "Inbox", "children": [] } ] }
+        { "path": "archive" },
+        { "path": "screenshots" }
       ]
     }
   ]
 }"#,
             );
 
-            fs::create_dir_all(home.join("System/Projects")).expect("create Projects");
+            fs::create_dir_all(home.join("Documents/archive")).expect("create archive");
 
             let code = run(false).expect("doctor run");
             assert_eq!(code, std::process::ExitCode::from(1));

@@ -25,6 +25,16 @@ pub enum Command {
         #[arg(long)]
         verbose: bool,
     },
+
+    /// Tidy Desktop screenshots and Downloads inbox
+    Tidy {
+        /// Perform actions (move/delete). Without this, runs in dry-run mode.
+        #[arg(long)]
+        apply: bool,
+        /// Delete all downloads (non-hidden), regardless of age
+        #[arg(long)]
+        all: bool,
+    },
 }
 
 pub fn parse() -> Cli {

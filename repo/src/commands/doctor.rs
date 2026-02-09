@@ -1,87 +1,38 @@
 use anyhow::{Context, Result};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
+
+use crate::check::check_tree;
+use crate::spec_loader::{expand_root, load_spec};
 
 pub fn run(verbose: bool) -> Result<std::process::ExitCode> {
     let home = dirs::home_dir().context("could not determine home directory")?;
+    let spec = load_spec()?;
 
-    let workspace = home.join("Workspace");
-    let system = home.join("System");
-    let documents = home.join("Documents");
+    let mut missing: Vec<PathBuf> = Vec::new();
 
-    // Roots to check
-    let required_roots: [(&str, &Path); 3] = [
-        ("Workspace", workspace.as_path()),
-        ("System", system.as_path()),
-        ("Documents", documents.as_path()),
-    ];
+    for area in &spec.areas {
+        let root = expand_root(&area.root, &home);
 
-    // System subfolders to check
-    let required_system_subfolders: [&str; 10] = [
-        "apps",
-        "backups",
-        "bootstrap",
-        "configs",
-        "dotfiles",
-        "life-os",
-        "logs",
-        "scripts",
-        "secrets",
-        "temp",
-    ];
-
-    if verbose {
-        println!("Resolved paths:");
-        for (name, path) in &required_roots {
-            println!("  - {name}: {}", path.display());
+        if verbose {
+            println!("Checking {} at {}", area.name, root.display());
         }
-        println!();
-    }
 
-    let mut missing: Vec<String> = Vec::new();
-
-    // Check roots
-    for (name, path) in &required_roots {
-        if !path.exists() {
-            missing.push(format!("Missing root: {name} ({})", path.display()));
+        if !root.exists() {
+            missing.push(root.clone());
+            continue;
         }
-    }
 
-    // If System exists, check its subfolders
-    if system.exists() {
-        for folder in required_system_subfolders {
-            let p = system.join(folder);
-            if !p.exists() {
-                missing.push(format!(
-                    "Missing System subfolder: {} ({})",
-                    folder,
-                    p.display()
-                ));
-            }
-        }
-    } else {
-        // System missing already reported above; avoid noisy subfolder spam
+        check_tree(&root, &area.required, &mut missing);
     }
 
     if missing.is_empty() {
-        println!("✓ life-os doctor: OK (roots and System subfolders exist)");
+        println!("✓ life-os doctor: OK (spec satisfied)");
         Ok(std::process::ExitCode::from(0))
     } else {
-        println!("✗ life-os doctor: problems found");
-        for msg in &missing {
-            println!("  - {msg}");
+        println!("✗ life-os doctor: missing folders");
+        for p in &missing {
+            println!("  - {}", p.display());
         }
-        println!();
-
-        println!("Fix suggestions:");
-        println!("  Create roots if missing:");
-        println!("    mkdir -p ~/Workspace ~/System ~/Documents");
-        println!("  Create missing System subfolders:");
-        print!("    mkdir -p ~/System");
-        for f in required_system_subfolders {
-            print!(" ~/System/{f}");
-        }
-        println!();
-
         Ok(std::process::ExitCode::from(1))
     }
 }

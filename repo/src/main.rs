@@ -1,5 +1,8 @@
+mod check;
 mod cli;
 mod commands;
+mod spec;
+mod spec_loader;
 
 use anyhow::Result;
 

@@ -19,6 +19,12 @@ pub enum Command {
         #[arg(long)]
         verbose: bool,
     },
+
+    Init {
+        /// Print each folder created
+        #[arg(long)]
+        verbose: bool,
+    },
 }
 
 pub fn parse() -> Cli {
